@@ -4,7 +4,7 @@ A simple Android application for managing weekly notes and tasks, optimized for 
 
 This app was made for two reasons
 - **Complete lack of weekly notes/planner apps**: I'll dive into this below.
-- **Inline Note Editing**: Click on notes to edit text directly
+- **To try 'vibe coding'**: The app is built entirely by a toaster according to my functional requirements and then endless debugging
 
 ## Weekly notes concept
 
