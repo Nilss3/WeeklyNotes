@@ -29,7 +29,7 @@ data class Note(
             NoteStatus.DONE -> "V"
             NoteStatus.CANCELLED -> "X"
             NoteStatus.MOVED -> ">"
-            NoteStatus.INFO -> "i"
+            NoteStatus.INFO -> "-"
         }
     }
 } 

@@ -13,8 +13,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +39,9 @@ import s.nils.weeklynotes.ui.theme.WeeklyNotesTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeeklyNotesScreen(
-    viewModel: WeeklyNotesViewModel = viewModel()
+    viewModel: WeeklyNotesViewModel,
+    onExportNotes: () -> Unit = { viewModel.exportNotes() },
+    onImportNotes: () -> Unit = { viewModel.importNotes() }
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
@@ -64,7 +69,11 @@ fun WeeklyNotesScreen(
             WeeklyHeader(
                 week = uiState.currentWeek,
                 onPreviousWeek = { viewModel.navigateToPreviousWeek() },
-                onNextWeek = { viewModel.navigateToNextWeek() }
+                onNextWeek = { viewModel.navigateToNextWeek() },
+                onExportNotes = onExportNotes,
+                onImportNotes = onImportNotes,
+                onToggleClosedNotes = { viewModel.toggleClosedNotesVisibility() },
+                hideClosedNotes = uiState.hideClosedNotes
             )
             
             // Date range
@@ -294,7 +303,17 @@ fun WeeklyNotesScreen(
                 verticalArrangement = Arrangement.spacedBy(6.dp),
                 contentPadding = PaddingValues(top = 4.dp, bottom = 40.dp)
             ) {
-                items(uiState.notes) { note ->
+                val filteredNotes = if (uiState.hideClosedNotes) {
+                    uiState.notes.filter { note ->
+                        note.status != s.nils.weeklynotes.data.NoteStatus.DONE &&
+                        note.status != s.nils.weeklynotes.data.NoteStatus.CANCELLED &&
+                        note.status != s.nils.weeklynotes.data.NoteStatus.MOVED
+                    }
+                } else {
+                    uiState.notes
+                }
+                
+                items(filteredNotes) { note ->
                     NoteItem(
                         note = note,
                         onContentChange = { content -> viewModel.updateNoteContent(note.id, content) },
@@ -320,6 +339,25 @@ fun WeeklyNotesScreen(
                 modifier = Modifier.size(24.dp)
             )
         }
+        
+        // Import warning dialog
+        if (uiState.showImportWarning) {
+            AlertDialog(
+                onDismissRequest = { viewModel.dismissImportWarning() },
+                title = { Text("Import Notes") },
+                text = { Text("This will delete all existing notes and replace them with the imported data. Are you sure you want to continue?") },
+                confirmButton = {
+                    TextButton(onClick = { viewModel.confirmImport() }) {
+                        Text("Import")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { viewModel.dismissImportWarning() }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
     }
 }
 
@@ -327,8 +365,13 @@ fun WeeklyNotesScreen(
 fun WeeklyHeader(
     week: s.nils.weeklynotes.data.Week,
     onPreviousWeek: () -> Unit,
-    onNextWeek: () -> Unit
+    onNextWeek: () -> Unit,
+    onExportNotes: () -> Unit,
+    onImportNotes: () -> Unit,
+    onToggleClosedNotes: () -> Unit,
+    hideClosedNotes: Boolean
 ) {
+    var showMenu by remember { mutableStateOf(false) }
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color.White,
@@ -341,53 +384,116 @@ fun WeeklyHeader(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Previous week button
+            // Hamburger menu button (left)
             Surface(
                 modifier = Modifier
                     .size(48.dp)
-                    .clickable { onPreviousWeek() }
+                    .clickable { showMenu = true }
                     .border(2.dp, Color.Black, shape = MaterialTheme.shapes.small)
                     .clip(MaterialTheme.shapes.small),
                 color = Color.White
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowLeft,
-                        contentDescription = "Previous week",
+                        Icons.Default.Menu,
+                        contentDescription = "Menu",
                         tint = Color.Black,
                         modifier = Modifier.size(24.dp)
                     )
                 }
             }
             
-            // Week title
-            Text(
-                text = week.title,
-                style = TextStyle(
-                    color = Color.Black,
-                    fontSize = 18.sp,
-                    fontWeight = FontWeight.Bold
+            // Week navigation (right)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Previous week button
+                Surface(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clickable { onPreviousWeek() }
+                        .border(2.dp, Color.Black, shape = MaterialTheme.shapes.small)
+                        .clip(MaterialTheme.shapes.small),
+                    color = Color.White
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowLeft,
+                            contentDescription = "Previous week",
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+                
+                // Week title
+                Text(
+                    text = week.title,
+                    style = TextStyle(
+                        color = Color.Black,
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
                 )
+                
+                // Next week button
+                Surface(
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clickable { onNextWeek() }
+                        .border(2.dp, Color.Black, shape = MaterialTheme.shapes.small)
+                        .clip(MaterialTheme.shapes.small),
+                    color = Color.White
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "Next week",
+                            tint = Color.Black,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+            }
+        }
+        
+        // Native Android dropdown menu
+        DropdownMenu(
+            expanded = showMenu,
+            onDismissRequest = { showMenu = false },
+            modifier = Modifier.background(Color.White)
+        ) {
+            DropdownMenuItem(
+                text = { 
+                    Text(
+                        if (hideClosedNotes) "Unhide 'closed' notes" else "Hide 'closed' notes",
+                        color = Color.Black
+                    ) 
+                },
+                onClick = {
+                    onToggleClosedNotes()
+                    showMenu = false
+                }
             )
             
-            // Next week button
-            Surface(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clickable { onNextWeek() }
-                    .border(2.dp, Color.Black, shape = MaterialTheme.shapes.small)
-                    .clip(MaterialTheme.shapes.small),
-                color = Color.White
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = "Next week",
-                        tint = Color.Black,
-                        modifier = Modifier.size(24.dp)
-                    )
+            // Divider
+            androidx.compose.material3.Divider(color = Color.Gray, thickness = 1.dp)
+            
+            DropdownMenuItem(
+                text = { Text("Import notes...", color = Color.Black) },
+                onClick = {
+                    onImportNotes()
+                    showMenu = false
                 }
-            }
+            )
+            DropdownMenuItem(
+                text = { Text("Export notes...", color = Color.Black) },
+                onClick = {
+                    onExportNotes()
+                    showMenu = false
+                }
+            )
         }
     }
 }
@@ -469,6 +575,8 @@ fun NoteItem(
 @Composable
 fun WeeklyNotesScreenPreview() {
     WeeklyNotesTheme {
-        WeeklyNotesScreen()
+        // Note: This preview won't work properly without a real ViewModel
+        // In a real app, this would be provided by the MainActivity
+        Text("WeeklyNotesScreen Preview - ViewModel required")
     }
 } 

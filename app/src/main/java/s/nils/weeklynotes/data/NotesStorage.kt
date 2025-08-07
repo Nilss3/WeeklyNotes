@@ -26,7 +26,7 @@ data class NoteData(
 )
 
 class NotesStorage(private val context: Context) {
-    private val gson = Gson()
+    val gson = Gson()
     private val storageDir = File(context.getExternalFilesDir(null), "weekly notes")
     
     init {
@@ -159,6 +159,65 @@ class NotesStorage(private val context: Context) {
             true
         } catch (e: Exception) {
             false
+        }
+    }
+    
+    suspend fun importFromJson(json: String): Boolean = withContext(Dispatchers.IO) {
+        try {
+            // Clear all existing data first
+            clearAllWeeks()
+            
+            val weeksData = gson.fromJson<List<WeekData>>(json, object : TypeToken<List<WeekData>>() {}.type)
+            android.util.Log.d("WeeklyNotes", "Importing ${weeksData.size} weeks")
+            
+            weeksData.forEach { weekData ->
+                android.util.Log.d("WeeklyNotes", "Importing week ${weekData.year}-${weekData.weekNumber} with ${weekData.notes.size} notes")
+                val week = Week(
+                    year = weekData.year,
+                    weekNumber = weekData.weekNumber,
+                    notes = weekData.notes.map { noteData ->
+                        Note(
+                            id = noteData.id,
+                            content = noteData.content,
+                            status = NoteStatus.valueOf(noteData.status),
+                            date = LocalDate.parse(noteData.date),
+                            order = noteData.order
+                        )
+                    }.sortedBy { it.order }
+                )
+                saveWeek(week)
+            }
+            true
+        } catch (e: Exception) {
+            android.util.Log.e("WeeklyNotes", "Import error: ${e.message}", e)
+            false
+        }
+    }
+    
+    suspend fun clearAllWeeks() = withContext(Dispatchers.IO) {
+        storageDir.listFiles()?.forEach { file ->
+            if (file.name.startsWith("week_") && file.name.endsWith(".json")) {
+                file.delete()
+            }
+        }
+    }
+    
+    suspend fun getAllWeeksForExport(): List<WeekData> = withContext(Dispatchers.IO) {
+        val allWeeks = getAllWeeks()
+        allWeeks.map { week ->
+            WeekData(
+                year = week.year,
+                weekNumber = week.weekNumber,
+                notes = week.notes.map { note ->
+                    NoteData(
+                        id = note.id,
+                        content = note.content,
+                        status = note.status.name,
+                        date = note.date.toString(),
+                        order = note.order
+                    )
+                }
+            )
         }
     }
     

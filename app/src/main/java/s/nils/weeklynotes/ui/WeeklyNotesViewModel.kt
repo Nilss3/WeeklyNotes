@@ -12,11 +12,17 @@ import s.nils.weeklynotes.data.Note
 import s.nils.weeklynotes.data.NoteStatus
 import s.nils.weeklynotes.data.NotesStorage
 import s.nils.weeklynotes.data.Week
+import java.io.File
+import android.net.Uri
+import android.content.Context
 
 data class WeeklyNotesUiState(
     val currentWeek: Week = NotesStorage.getCurrentWeek(),
     val notes: List<Note> = emptyList(),
-    val isLoading: Boolean = false
+    val isLoading: Boolean = false,
+    val showImportWarning: Boolean = false,
+    val pendingImportUri: Uri? = null,
+    val hideClosedNotes: Boolean = false
 )
 
 class WeeklyNotesViewModel(application: Application) : AndroidViewModel(application) {
@@ -132,16 +138,97 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
 
     fun exportNotes() {
         viewModelScope.launch {
-            storage.getExportFile()
+            try {
+                val exportFile = storage.getExportFile()
+                // The file is now saved in the accessible location
+                // User can access it through file manager
+            } catch (e: Exception) {
+                // Handle error
+            }
+        }
+    }
+    
+    fun exportToLocation(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                val exportData = storage.getAllWeeksForExport()
+                android.util.Log.d("WeeklyNotes", "Exporting ${exportData.size} weeks")
+                exportData.forEach { weekData ->
+                    android.util.Log.d("WeeklyNotes", "Exporting week ${weekData.year}-${weekData.weekNumber} with ${weekData.notes.size} notes")
+                }
+                
+                val json = storage.gson.toJson(exportData)
+                android.util.Log.d("WeeklyNotes", "Export JSON size: ${json.length} characters")
+                
+                getApplication<Application>().contentResolver.openOutputStream(uri)?.use { outputStream ->
+                    outputStream.write(json.toByteArray())
+                }
+                android.util.Log.d("WeeklyNotes", "Export completed successfully")
+            } catch (e: Exception) {
+                android.util.Log.e("WeeklyNotes", "Export error: ${e.message}", e)
+            }
         }
     }
 
-    fun importNotes(filePath: String) {
+    fun importNotes() {
+        // This will be handled by the file picker in MainActivity
+    }
+    
+    fun importFromFile(uri: Uri) {
+        android.util.Log.d("WeeklyNotes", "importFromFile called with URI: $uri")
+        _uiState.update { 
+            it.copy(
+                showImportWarning = true,
+                pendingImportUri = uri
+            )
+        }
+    }
+    
+    fun confirmImport() {
+        android.util.Log.d("WeeklyNotes", "confirmImport called")
         viewModelScope.launch {
-            val file = java.io.File(filePath)
-            if (storage.importFromFile(file)) {
-                loadCurrentWeek()
+            val uri = _uiState.value.pendingImportUri
+            android.util.Log.d("WeeklyNotes", "confirmImport URI: $uri")
+            if (uri != null) {
+                try {
+                    val inputStream = getApplication<Application>().contentResolver.openInputStream(uri)
+                    val json = inputStream?.bufferedReader().use { it?.readText() } ?: return@launch
+                    
+                    android.util.Log.d("WeeklyNotes", "Importing JSON: ${json.take(100)}...")
+                    
+                    if (storage.importFromJson(json)) {
+                        android.util.Log.d("WeeklyNotes", "Import successful, loading current week")
+                        loadCurrentWeek()
+                    } else {
+                        android.util.Log.e("WeeklyNotes", "Import failed")
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("WeeklyNotes", "Import error: ${e.message}", e)
+                }
             }
+            _uiState.update { 
+                it.copy(
+                    showImportWarning = false,
+                    pendingImportUri = null
+                )
+            }
+        }
+    }
+    
+    fun dismissImportWarning() {
+        _uiState.update { 
+            it.copy(
+                showImportWarning = false,
+                pendingImportUri = null
+            )
+        }
+    }
+    
+    fun toggleClosedNotesVisibility() {
+        _uiState.update { 
+            it.copy(
+                hideClosedNotes = !it.hideClosedNotes
+            )
         }
     }
 } 
