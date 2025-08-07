@@ -85,6 +85,7 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
         val currentNotes = _uiState.value.notes
         val newNote = Note(
             content = "",
+            status = NoteStatus.INFO,
             order = currentNotes.size
         )
         

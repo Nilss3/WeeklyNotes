@@ -27,7 +27,7 @@ data class NoteData(
 
 class NotesStorage(private val context: Context) {
     private val gson = Gson()
-    private val storageDir = File(context.filesDir, "weekly_notes")
+    private val storageDir = File(context.getExternalFilesDir(null), "weekly notes")
     
     init {
         if (!storageDir.exists()) {
@@ -130,7 +130,7 @@ class NotesStorage(private val context: Context) {
         }
         
         val json = gson.toJson(exportData)
-        val exportFile = File(context.getExternalFilesDir(null), "weekly_notes_export.json")
+        val exportFile = File(storageDir, "weekly_notes_export.json")
         exportFile.writeText(json)
         return exportFile
     }

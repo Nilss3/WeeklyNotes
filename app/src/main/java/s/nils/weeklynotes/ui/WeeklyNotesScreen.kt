@@ -291,8 +291,8 @@ fun WeeklyNotesScreen(
                 modifier = Modifier
                     .weight(1f) // Take remaining space
                     .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                contentPadding = PaddingValues(vertical = 8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                contentPadding = PaddingValues(top = 4.dp, bottom = 40.dp)
             ) {
                 items(uiState.notes) { note ->
                     NoteItem(
@@ -310,7 +310,7 @@ fun WeeklyNotesScreen(
             onClick = { viewModel.addNote() },
             modifier = Modifier
                 .align(Alignment.BottomEnd)
-                .padding(16.dp),
+                .padding(bottom = 64.dp, end = 16.dp),
             containerColor = Color.Black,
             contentColor = Color.White
         ) {
@@ -418,8 +418,8 @@ fun NoteItem(
             .fillMaxWidth()
             .border(2.dp, Color.Black, shape = MaterialTheme.shapes.small)
             .background(Color.White, shape = MaterialTheme.shapes.small)
-            .padding(8.dp),
-        verticalAlignment = Alignment.Top
+            .padding(6.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         // Status button
         Surface(
@@ -445,7 +445,7 @@ fun NoteItem(
         Spacer(modifier = Modifier.width(8.dp))
         
         // Note content text field
-        OutlinedTextField(
+        BasicTextField(
             value = textFieldValue.text,
             onValueChange = { newText ->
                 textFieldValue = TextFieldValue(newText)
@@ -458,12 +458,6 @@ fun NoteItem(
                 color = Color.Black,
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Normal
-            ),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.Black,
-                unfocusedBorderColor = Color.Transparent,
-                focusedLabelColor = Color.Black,
-                unfocusedLabelColor = Color.Black
             ),
             singleLine = false,
             maxLines = Int.MAX_VALUE // Allow unlimited lines
