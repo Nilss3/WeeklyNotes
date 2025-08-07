@@ -231,4 +231,59 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
             )
         }
     }
+    
+    fun changeNoteStatus(noteId: String, newStatus: NoteStatus) {
+        val currentNotes = _uiState.value.notes
+        val updatedNotes = currentNotes.map { note ->
+            if (note.id == noteId) {
+                note.copy(status = newStatus)
+            } else {
+                note
+            }
+        }
+        
+        _uiState.update { it.copy(notes = updatedNotes) }
+        saveCurrentWeek()
+    }
+    
+    fun moveNoteToNextWeek(noteId: String) {
+        viewModelScope.launch {
+            val currentNotes = _uiState.value.notes
+            val noteToMove = currentNotes.find { it.id == noteId }
+            
+            if (noteToMove != null) {
+                // Remove note from current week
+                val updatedNotes = currentNotes.filter { it.id != noteId }
+                _uiState.update { it.copy(notes = updatedNotes) }
+                saveCurrentWeek()
+                
+                // Calculate next week
+                val currentWeek = _uiState.value.currentWeek
+                val nextWeekNumber = if (currentWeek.weekNumber < 52) currentWeek.weekNumber + 1 else 1
+                val nextYear = if (currentWeek.weekNumber < 52) currentWeek.year else currentWeek.year + 1
+                
+                // Load next week and add the note
+                val nextWeek = Week(year = nextYear, weekNumber = nextWeekNumber)
+                val existingNextWeek = storage.loadWeek(nextYear, nextWeekNumber)
+                
+                val nextWeekNotes = existingNextWeek?.notes?.toMutableList() ?: mutableListOf()
+                val movedNote = noteToMove.copy(
+                    date = nextWeek.startDate,
+                    order = nextWeekNotes.size
+                )
+                nextWeekNotes.add(movedNote)
+                
+                val updatedNextWeek = nextWeek.copy(notes = nextWeekNotes)
+                storage.saveWeek(updatedNextWeek)
+            }
+        }
+    }
+    
+    fun deleteNote(noteId: String) {
+        val currentNotes = _uiState.value.notes
+        val updatedNotes = currentNotes.filter { it.id != noteId }
+        
+        _uiState.update { it.copy(notes = updatedNotes) }
+        saveCurrentWeek()
+    }
 } 

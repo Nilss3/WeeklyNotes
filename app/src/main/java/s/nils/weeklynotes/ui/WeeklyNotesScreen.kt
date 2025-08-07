@@ -3,6 +3,7 @@ package s.nils.weeklynotes.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -25,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -318,6 +320,9 @@ fun WeeklyNotesScreen(
                         note = note,
                         onContentChange = { content -> viewModel.updateNoteContent(note.id, content) },
                         onStatusClick = { viewModel.cycleNoteStatus(note.id) },
+                        onStatusChange = { status -> viewModel.changeNoteStatus(note.id, status) },
+                        onMoveToNextWeek = { viewModel.moveNoteToNextWeek(note.id) },
+                        onDelete = { viewModel.deleteNote(note.id) },
                         isNewNote = note == uiState.notes.lastOrNull() && note.content.isEmpty()
                     )
                 }
@@ -503,10 +508,15 @@ fun NoteItem(
     note: Note,
     onContentChange: (String) -> Unit,
     onStatusClick: () -> Unit,
+    onStatusChange: (s.nils.weeklynotes.data.NoteStatus) -> Unit,
+    onMoveToNextWeek: () -> Unit,
+    onDelete: () -> Unit,
     isNewNote: Boolean
 ) {
     var textFieldValue by remember { mutableStateOf(TextFieldValue(note.content)) }
     val focusRequester = remember { FocusRequester() }
+    var showContextMenu by remember { mutableStateOf(false) }
+    var showDeleteDialog by remember { mutableStateOf(false) }
     
     LaunchedEffect(note.content) {
         textFieldValue = TextFieldValue(note.content)
@@ -531,7 +541,12 @@ fun NoteItem(
         Surface(
             modifier = Modifier
                 .size(32.dp)
-                .clickable { onStatusClick() }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { onStatusClick() },
+                        onLongPress = { showContextMenu = true }
+                    )
+                }
                 .border(2.dp, Color.Black, shape = MaterialTheme.shapes.small)
                 .clip(MaterialTheme.shapes.small),
             color = Color.White
@@ -546,6 +561,96 @@ fun NoteItem(
                     )
                 )
             }
+        }
+        
+        // Contextual menu
+        DropdownMenu(
+            expanded = showContextMenu,
+            onDismissRequest = { showContextMenu = false },
+            modifier = Modifier.background(Color.White)
+        ) {
+            // Status change options
+            DropdownMenuItem(
+                text = { Text("(-) Change status to 'note/info'", color = Color.Black) },
+                onClick = {
+                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.INFO)
+                    showContextMenu = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("() Change status to 'to do' ('open' task)", color = Color.Black) },
+                onClick = {
+                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.BLANK)
+                    showContextMenu = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("(V) Change status to 'done' ('closed' task)", color = Color.Black) },
+                onClick = {
+                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.DONE)
+                    showContextMenu = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("(X) Change status to 'cancelled' ('closed' task)", color = Color.Black) },
+                onClick = {
+                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.CANCELLED)
+                    showContextMenu = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("(>) Change status to 'moved' ('closed' task)", color = Color.Black) },
+                onClick = {
+                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.MOVED)
+                    showContextMenu = false
+                }
+            )
+            
+            // Divider
+            androidx.compose.material3.Divider(color = Color.Gray, thickness = 1.dp)
+            
+            // Move to next week option
+            DropdownMenuItem(
+                text = { Text("Move to next week", color = Color.Black) },
+                onClick = {
+                    onMoveToNextWeek()
+                    showContextMenu = false
+                }
+            )
+            
+            // Divider
+            androidx.compose.material3.Divider(color = Color.Gray, thickness = 1.dp)
+            
+            // Delete option
+            DropdownMenuItem(
+                text = { Text("Delete", color = Color.Black) },
+                onClick = {
+                    showDeleteDialog = true
+                    showContextMenu = false
+                }
+            )
+        }
+        
+        // Delete confirmation dialog
+        if (showDeleteDialog) {
+            AlertDialog(
+                onDismissRequest = { showDeleteDialog = false },
+                title = { Text("Delete Note") },
+                text = { Text("Are you sure you want to delete this note?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        onDelete()
+                        showDeleteDialog = false
+                    }) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteDialog = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
         }
         
         Spacer(modifier = Modifier.width(8.dp))
