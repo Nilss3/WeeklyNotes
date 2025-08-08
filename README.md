@@ -25,8 +25,10 @@ So: I did not code this app myself. Not at all. It is entirely written by a toas
 - **Infinite notes per week**: Add as many notes as you want per week
 - **Infinite length**: A note can have as much text as you want (but all text is shown at all times, just like on paper!)
 - **Status Management**: Each 'note' has a status indicator on the left, just like you would have a left margin on paper. You can hence turn a note into a todo, just like you would do with a bullet journal. Just click on the status box on the left to the note to cycle through the statuses: blank (to do), V (done), X (canceled), > (moved: to another week, another planner, etc.), i (info/note = default). You can also change the status from a contextual menu.
-- **Move to next week**: From a contextual menu you can also move a note/task to the next week.
+- **Move to next week**: Click and hold the status on the left to open the contextual menu. You can move a note/task to the next week.
+- **Rearrange notes**: The same contextual menu allows to move notes up and down in the list.
 - **Filter out closed tasks**: In the hamburger menu is an option to hide or unhide 'closed' tasks (done, cancelled, or moved)
+- **Open a date in your calendar**: You may want to regularly see your normal calendar. Click on a date on top to open your calendar on that date (if supported). There is no need to replicate a normal calendar in the Weekly Notes app itself.
 - **Auto-save**: All changes are automatically saved
 - **File-based Storage**: Notes are saved to JSON files for easy transfer between devices
 - **E-ink Optimized**: White background with thick black interface elements
