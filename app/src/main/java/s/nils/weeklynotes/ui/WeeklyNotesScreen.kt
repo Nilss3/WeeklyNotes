@@ -472,7 +472,7 @@ fun WeeklyHeader(
             DropdownMenuItem(
                 text = { 
                     Text(
-                        if (hideClosedNotes) "Unhide 'closed' notes" else "Hide 'closed' notes",
+                        if (hideClosedNotes) "Unhide closed tasks" else "Hide closed tasks",
                         color = Color.Black
                     ) 
                 },
@@ -571,35 +571,35 @@ fun NoteItem(
         ) {
             // Status change options
             DropdownMenuItem(
-                text = { Text("(-) Change status to 'note/info'", color = Color.Black) },
+                text = { Text("(-) Mark as Note/info", color = Color.Black) },
                 onClick = {
                     onStatusChange(s.nils.weeklynotes.data.NoteStatus.INFO)
                     showContextMenu = false
                 }
             )
             DropdownMenuItem(
-                text = { Text("() Change status to 'to do' ('open' task)", color = Color.Black) },
+                text = { Text("() Mark as open task: To do", color = Color.Black) },
                 onClick = {
                     onStatusChange(s.nils.weeklynotes.data.NoteStatus.BLANK)
                     showContextMenu = false
                 }
             )
             DropdownMenuItem(
-                text = { Text("(V) Change status to 'done' ('closed' task)", color = Color.Black) },
+                text = { Text("(V) Mark as closed task: Done", color = Color.Black) },
                 onClick = {
                     onStatusChange(s.nils.weeklynotes.data.NoteStatus.DONE)
                     showContextMenu = false
                 }
             )
             DropdownMenuItem(
-                text = { Text("(X) Change status to 'cancelled' ('closed' task)", color = Color.Black) },
+                text = { Text("(X) Mark as closed task: Cancelled", color = Color.Black) },
                 onClick = {
                     onStatusChange(s.nils.weeklynotes.data.NoteStatus.CANCELLED)
                     showContextMenu = false
                 }
             )
             DropdownMenuItem(
-                text = { Text("(>) Change status to 'moved' ('closed' task)", color = Color.Black) },
+                text = { Text("(>) Mark as closed task: Moved", color = Color.Black) },
                 onClick = {
                     onStatusChange(s.nils.weeklynotes.data.NoteStatus.MOVED)
                     showContextMenu = false
