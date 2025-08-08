@@ -20,6 +20,9 @@ import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.*
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,6 +40,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import s.nils.weeklynotes.data.Note
 import androidx.compose.ui.tooling.preview.Preview
 import s.nils.weeklynotes.ui.theme.WeeklyNotesTheme
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,7 +80,8 @@ fun WeeklyNotesScreen(
                 onExportNotes = onExportNotes,
                 onImportNotes = onImportNotes,
                 onToggleClosedNotes = { viewModel.toggleClosedNotesVisibility() },
-                hideClosedNotes = uiState.hideClosedNotes
+                hideClosedNotes = uiState.hideClosedNotes,
+                onDateSelected = { selectedDate -> viewModel.navigateToDate(selectedDate) }
             )
             
             // Date range
@@ -366,6 +372,7 @@ fun WeeklyNotesScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WeeklyHeader(
     week: s.nils.weeklynotes.data.Week,
@@ -374,9 +381,11 @@ fun WeeklyHeader(
     onExportNotes: () -> Unit,
     onImportNotes: () -> Unit,
     onToggleClosedNotes: () -> Unit,
-    hideClosedNotes: Boolean
+    hideClosedNotes: Boolean,
+    onDateSelected: (LocalDate) -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    var showDatePicker by remember { mutableStateOf(false) }
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = Color.White,
@@ -432,14 +441,17 @@ fun WeeklyHeader(
                     }
                 }
                 
-                // Week title
+                // Week title - clickable to open date picker
                 Text(
                     text = week.title,
                     style = TextStyle(
                         color = Color.Black,
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
-                    )
+                    ),
+                    modifier = Modifier
+                        .clickable { showDatePicker = true }
+                        .padding(8.dp)
                 )
                 
                 // Next week button
@@ -467,7 +479,9 @@ fun WeeklyHeader(
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { showMenu = false },
-            modifier = Modifier.background(Color.White)
+            modifier = Modifier
+                .background(Color.White)
+                .border(1.dp, Color.Black, shape = MaterialTheme.shapes.small)
         ) {
             DropdownMenuItem(
                 text = { 
@@ -478,6 +492,17 @@ fun WeeklyHeader(
                 },
                 onClick = {
                     onToggleClosedNotes()
+                    showMenu = false
+                }
+            )
+            
+            // Divider
+            androidx.compose.material3.Divider(color = Color.Gray, thickness = 1.dp)
+            
+            DropdownMenuItem(
+                text = { Text("Go to current week", color = Color.Black) },
+                onClick = {
+                    onDateSelected(LocalDate.now())
                     showMenu = false
                 }
             )
@@ -499,6 +524,37 @@ fun WeeklyHeader(
                     showMenu = false
                 }
             )
+        }
+        
+        // Date picker dialog
+        if (showDatePicker) {
+            val datePickerState = rememberDatePickerState()
+            
+            DatePickerDialog(
+                onDismissRequest = { showDatePicker = false },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            datePickerState.selectedDateMillis?.let { millis ->
+                                val selectedDate = java.time.Instant.ofEpochMilli(millis)
+                                    .atZone(ZoneOffset.UTC)
+                                    .toLocalDate()
+                                onDateSelected(selectedDate)
+                            }
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text("OK")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDatePicker = false }) {
+                        Text("Cancel")
+                    }
+                }
+            ) {
+                DatePicker(state = datePickerState)
+            }
         }
     }
 }
@@ -567,7 +623,9 @@ fun NoteItem(
         DropdownMenu(
             expanded = showContextMenu,
             onDismissRequest = { showContextMenu = false },
-            modifier = Modifier.background(Color.White)
+            modifier = Modifier
+                .background(Color.White)
+                .border(1.dp, Color.Black, shape = MaterialTheme.shapes.small)
         ) {
             // Status change options
             DropdownMenuItem(

@@ -15,6 +15,8 @@ import s.nils.weeklynotes.data.Week
 import java.io.File
 import android.net.Uri
 import android.content.Context
+import java.time.LocalDate
+import java.time.temporal.WeekFields
 
 data class WeeklyNotesUiState(
     val currentWeek: Week = NotesStorage.getCurrentWeek(),
@@ -77,6 +79,25 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
             
             val newWeek = Week(year = newYear, weekNumber = newWeekNumber)
             val loadedWeek = storage.loadWeek(newYear, newWeekNumber)
+            
+            _uiState.update { 
+                it.copy(
+                    currentWeek = loadedWeek ?: newWeek,
+                    notes = loadedWeek?.notes ?: emptyList()
+                )
+            }
+        }
+    }
+
+    fun navigateToDate(selectedDate: LocalDate) {
+        viewModelScope.launch {
+            // Calculate the week number for the selected date
+            val weekFields = WeekFields.ISO
+            val year = selectedDate.get(weekFields.weekBasedYear())
+            val weekNumber = selectedDate.get(weekFields.weekOfWeekBasedYear())
+            
+            val newWeek = Week(year = year, weekNumber = weekNumber)
+            val loadedWeek = storage.loadWeek(year, weekNumber)
             
             _uiState.update { 
                 it.copy(
