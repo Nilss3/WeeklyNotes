@@ -42,6 +42,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import s.nils.weeklynotes.ui.theme.WeeklyNotesTheme
 import java.time.LocalDate
 import java.time.ZoneOffset
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,8 +53,37 @@ fun WeeklyNotesScreen(
     onExportNotes: () -> Unit = { viewModel.exportNotes() },
     onImportNotes: () -> Unit = { viewModel.importNotes() }
 ) {
+    val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
+    
+    fun openCalendarApp(date: LocalDate) {
+        try {
+            // Convert date to milliseconds for calendar intent
+            val timeInMillis = date.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+            
+            // Create calendar intent with specific time
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                data = Uri.parse("content://com.android.calendar/time/$timeInMillis")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            
+            // Try to launch the calendar app
+            if (intent.resolveActivity(context.packageManager) != null) {
+                context.startActivity(intent)
+            } else {
+                // Fallback: try alternative format
+                val fallbackIntent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse("content://com.android.calendar/time/")
+                    putExtra("beginTime", timeInMillis)
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(fallbackIntent)
+            }
+        } catch (e: Exception) {
+            // If calendar app is not available, do nothing
+        }
+    }
     
     // Scroll to bottom when new notes are added
     LaunchedEffect(uiState.notes.size) {
@@ -93,7 +125,10 @@ fun WeeklyNotesScreen(
             ) {
                 // Monday
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { openCalendarApp(uiState.currentWeek.startDate) }
+                        .padding(4.dp)
                 ) {
                     Text(
                         text = "Mo",
@@ -123,7 +158,10 @@ fun WeeklyNotesScreen(
                 
                 // Tuesday
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { openCalendarApp(uiState.currentWeek.startDate.plusDays(1)) }
+                        .padding(4.dp)
                 ) {
                     Text(
                         text = "Tu",
@@ -153,7 +191,10 @@ fun WeeklyNotesScreen(
                 
                 // Wednesday
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { openCalendarApp(uiState.currentWeek.startDate.plusDays(2)) }
+                        .padding(4.dp)
                 ) {
                     Text(
                         text = "We",
@@ -183,7 +224,10 @@ fun WeeklyNotesScreen(
                 
                 // Thursday
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { openCalendarApp(uiState.currentWeek.startDate.plusDays(3)) }
+                        .padding(4.dp)
                 ) {
                     Text(
                         text = "Thu",
@@ -213,7 +257,10 @@ fun WeeklyNotesScreen(
                 
                 // Friday
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { openCalendarApp(uiState.currentWeek.startDate.plusDays(4)) }
+                        .padding(4.dp)
                 ) {
                     Text(
                         text = "Fr",
@@ -243,7 +290,10 @@ fun WeeklyNotesScreen(
                 
                 // Saturday
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { openCalendarApp(uiState.currentWeek.startDate.plusDays(5)) }
+                        .padding(4.dp)
                 ) {
                     Text(
                         text = "Sa",
@@ -273,7 +323,10 @@ fun WeeklyNotesScreen(
                 
                 // Sunday
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .clickable { openCalendarApp(uiState.currentWeek.endDate) }
+                        .padding(4.dp)
                 ) {
                     Text(
                         text = "Su",
@@ -322,14 +375,21 @@ fun WeeklyNotesScreen(
                 }
                 
                 items(filteredNotes) { note ->
+                    val noteIndex = filteredNotes.indexOf(note)
                     NoteItem(
                         note = note,
                         onContentChange = { content -> viewModel.updateNoteContent(note.id, content) },
                         onStatusClick = { viewModel.cycleNoteStatus(note.id) },
                         onStatusChange = { status -> viewModel.changeNoteStatus(note.id, status) },
                         onMoveToNextWeek = { viewModel.moveNoteToNextWeek(note.id) },
+                        onMoveToTop = { viewModel.moveNoteToTop(note.id) },
+                        onMoveUp = { viewModel.moveNoteUp(note.id) },
+                        onMoveDown = { viewModel.moveNoteDown(note.id) },
+                        onMoveToBottom = { viewModel.moveNoteToBottom(note.id) },
                         onDelete = { viewModel.deleteNote(note.id) },
-                        isNewNote = note == uiState.notes.lastOrNull() && note.content.isEmpty()
+                        isNewNote = note == uiState.notes.lastOrNull() && note.content.isEmpty(),
+                        isFirst = noteIndex == 0,
+                        isLast = noteIndex == filteredNotes.size - 1
                     )
                 }
             }
@@ -566,8 +626,14 @@ fun NoteItem(
     onStatusClick: () -> Unit,
     onStatusChange: (s.nils.weeklynotes.data.NoteStatus) -> Unit,
     onMoveToNextWeek: () -> Unit,
+    onMoveToTop: () -> Unit,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onMoveToBottom: () -> Unit,
     onDelete: () -> Unit,
-    isNewNote: Boolean
+    isNewNote: Boolean,
+    isFirst: Boolean,
+    isLast: Boolean
 ) {
     var textFieldValue by remember { mutableStateOf(TextFieldValue(note.content)) }
     val focusRequester = remember { FocusRequester() }
@@ -627,42 +693,79 @@ fun NoteItem(
                 .background(Color.White)
                 .border(1.dp, Color.Black, shape = MaterialTheme.shapes.small)
         ) {
-            // Status change options
+            // Mark as submenu
+            var showMarkAsSubmenu by remember { mutableStateOf(false) }
+            
             DropdownMenuItem(
-                text = { Text("(-) Mark as Note/info", color = Color.Black) },
+                text = { 
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Mark as", color = Color.Black)
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "Submenu",
+                            tint = Color.Black,
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                },
                 onClick = {
-                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.INFO)
-                    showContextMenu = false
+                    showMarkAsSubmenu = true
                 }
             )
-            DropdownMenuItem(
-                text = { Text("() Mark as open task: To do", color = Color.Black) },
-                onClick = {
-                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.BLANK)
-                    showContextMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("(V) Mark as closed task: Done", color = Color.Black) },
-                onClick = {
-                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.DONE)
-                    showContextMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("(X) Mark as closed task: Cancelled", color = Color.Black) },
-                onClick = {
-                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.CANCELLED)
-                    showContextMenu = false
-                }
-            )
-            DropdownMenuItem(
-                text = { Text("(>) Mark as closed task: Moved", color = Color.Black) },
-                onClick = {
-                    onStatusChange(s.nils.weeklynotes.data.NoteStatus.MOVED)
-                    showContextMenu = false
-                }
-            )
+            
+            // Mark as submenu
+            DropdownMenu(
+                expanded = showMarkAsSubmenu,
+                onDismissRequest = { showMarkAsSubmenu = false },
+                modifier = Modifier
+                    .background(Color.White)
+                    .border(1.dp, Color.Black, shape = MaterialTheme.shapes.small)
+            ) {
+                DropdownMenuItem(
+                    text = { Text("(-) Note/info", color = Color.Black) },
+                    onClick = {
+                        onStatusChange(s.nils.weeklynotes.data.NoteStatus.INFO)
+                        showMarkAsSubmenu = false
+                        showContextMenu = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("() Open task: To do", color = Color.Black) },
+                    onClick = {
+                        onStatusChange(s.nils.weeklynotes.data.NoteStatus.BLANK)
+                        showMarkAsSubmenu = false
+                        showContextMenu = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("(V) Closed task: Done", color = Color.Black) },
+                    onClick = {
+                        onStatusChange(s.nils.weeklynotes.data.NoteStatus.DONE)
+                        showMarkAsSubmenu = false
+                        showContextMenu = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("(X) Closed task: Cancelled", color = Color.Black) },
+                    onClick = {
+                        onStatusChange(s.nils.weeklynotes.data.NoteStatus.CANCELLED)
+                        showMarkAsSubmenu = false
+                        showContextMenu = false
+                    }
+                )
+                DropdownMenuItem(
+                    text = { Text("(>) Closed task: Moved", color = Color.Black) },
+                    onClick = {
+                        onStatusChange(s.nils.weeklynotes.data.NoteStatus.MOVED)
+                        showMarkAsSubmenu = false
+                        showContextMenu = false
+                    }
+                )
+            }
             
             // Divider
             androidx.compose.material3.Divider(color = Color.Gray, thickness = 1.dp)
@@ -674,6 +777,51 @@ fun NoteItem(
                     onMoveToNextWeek()
                     showContextMenu = false
                 }
+            )
+            
+            // Divider
+            androidx.compose.material3.Divider(color = Color.Gray, thickness = 1.dp)
+            
+            // Move options
+            DropdownMenuItem(
+                text = { Text("Move to top", color = if (isFirst) Color.Gray else Color.Black) },
+                onClick = {
+                    if (!isFirst) {
+                        onMoveToTop()
+                    }
+                    showContextMenu = false
+                },
+                enabled = !isFirst
+            )
+            DropdownMenuItem(
+                text = { Text("Move up", color = if (isFirst) Color.Gray else Color.Black) },
+                onClick = {
+                    if (!isFirst) {
+                        onMoveUp()
+                    }
+                    showContextMenu = false
+                },
+                enabled = !isFirst
+            )
+            DropdownMenuItem(
+                text = { Text("Move down", color = if (isLast) Color.Gray else Color.Black) },
+                onClick = {
+                    if (!isLast) {
+                        onMoveDown()
+                    }
+                    showContextMenu = false
+                },
+                enabled = !isLast
+            )
+            DropdownMenuItem(
+                text = { Text("Move to bottom", color = if (isLast) Color.Gray else Color.Black) },
+                onClick = {
+                    if (!isLast) {
+                        onMoveToBottom()
+                    }
+                    showContextMenu = false
+                },
+                enabled = !isLast
             )
             
             // Divider

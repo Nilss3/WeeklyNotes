@@ -307,4 +307,78 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
         _uiState.update { it.copy(notes = updatedNotes) }
         saveCurrentWeek()
     }
+    
+    fun moveNoteToTop(noteId: String) {
+        val currentNotes = _uiState.value.notes
+        val noteIndex = currentNotes.indexOfFirst { it.id == noteId }
+        
+        if (noteIndex > 0) {
+            val note = currentNotes[noteIndex]
+            val updatedNotes = currentNotes.toMutableList()
+            updatedNotes.removeAt(noteIndex)
+            updatedNotes.add(0, note.copy(order = 0))
+            
+            // Update order for all notes
+            val reorderedNotes = updatedNotes.mapIndexed { index, note ->
+                note.copy(order = index)
+            }
+            
+            _uiState.update { it.copy(notes = reorderedNotes) }
+            saveCurrentWeek()
+        }
+    }
+    
+    fun moveNoteUp(noteId: String) {
+        val currentNotes = _uiState.value.notes
+        val noteIndex = currentNotes.indexOfFirst { it.id == noteId }
+        
+        if (noteIndex > 0) {
+            val updatedNotes = currentNotes.toMutableList()
+            val note = updatedNotes[noteIndex]
+            val previousNote = updatedNotes[noteIndex - 1]
+            
+            updatedNotes[noteIndex] = previousNote.copy(order = note.order)
+            updatedNotes[noteIndex - 1] = note.copy(order = previousNote.order)
+            
+            _uiState.update { it.copy(notes = updatedNotes) }
+            saveCurrentWeek()
+        }
+    }
+    
+    fun moveNoteDown(noteId: String) {
+        val currentNotes = _uiState.value.notes
+        val noteIndex = currentNotes.indexOfFirst { it.id == noteId }
+        
+        if (noteIndex >= 0 && noteIndex < currentNotes.size - 1) {
+            val updatedNotes = currentNotes.toMutableList()
+            val note = updatedNotes[noteIndex]
+            val nextNote = updatedNotes[noteIndex + 1]
+            
+            updatedNotes[noteIndex] = nextNote.copy(order = note.order)
+            updatedNotes[noteIndex + 1] = note.copy(order = nextNote.order)
+            
+            _uiState.update { it.copy(notes = updatedNotes) }
+            saveCurrentWeek()
+        }
+    }
+    
+    fun moveNoteToBottom(noteId: String) {
+        val currentNotes = _uiState.value.notes
+        val noteIndex = currentNotes.indexOfFirst { it.id == noteId }
+        
+        if (noteIndex >= 0 && noteIndex < currentNotes.size - 1) {
+            val note = currentNotes[noteIndex]
+            val updatedNotes = currentNotes.toMutableList()
+            updatedNotes.removeAt(noteIndex)
+            updatedNotes.add(note.copy(order = currentNotes.size - 1))
+            
+            // Update order for all notes
+            val reorderedNotes = updatedNotes.mapIndexed { index, note ->
+                note.copy(order = index)
+            }
+            
+            _uiState.update { it.copy(notes = reorderedNotes) }
+            saveCurrentWeek()
+        }
+    }
 } 
