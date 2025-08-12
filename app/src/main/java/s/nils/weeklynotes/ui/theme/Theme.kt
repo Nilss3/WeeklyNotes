@@ -12,6 +12,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+enum class ColorScheme {
+    LIGHT,      // White background, black text (current e-ink mode)
+    DARK,       // Black background, white text
+    SYSTEM,     // Follow Android system theme
+    CUSTOM      // Custom colors
+}
+
 private val EInkColorScheme = lightColorScheme(
     primary = Color.Black,
     secondary = Color.Black,
@@ -27,14 +34,50 @@ private val EInkColorScheme = lightColorScheme(
     onSurfaceVariant = Color.Black
 )
 
+private val DarkColorScheme = darkColorScheme(
+    primary = Color.White,
+    secondary = Color.White,
+    tertiary = Color.White,
+    background = Color.Black,
+    surface = Color.Black,
+    onPrimary = Color.Black,
+    onSecondary = Color.Black,
+    onTertiary = Color.Black,
+    onBackground = Color.White,
+    onSurface = Color.White,
+    surfaceVariant = Color.Black,
+    onSurfaceVariant = Color.White
+)
+
 @Composable
 fun WeeklyNotesTheme(
-    darkTheme: Boolean = false, // Always use light theme for e-ink
-    dynamicColor: Boolean = false, // Disable dynamic colors for e-ink
+    colorScheme: ColorScheme = ColorScheme.LIGHT,
+    customTextColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Black,
+    customBackgroundColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.White,
     content: @Composable () -> Unit
 ) {
+    val colorSchemeToUse = when (colorScheme) {
+        ColorScheme.LIGHT -> EInkColorScheme
+        ColorScheme.DARK -> DarkColorScheme
+        ColorScheme.SYSTEM -> if (isSystemInDarkTheme()) DarkColorScheme else EInkColorScheme
+        ColorScheme.CUSTOM -> lightColorScheme(
+            primary = customTextColor,
+            secondary = customTextColor,
+            tertiary = customTextColor,
+            background = customBackgroundColor,
+            surface = customBackgroundColor,
+            onPrimary = customBackgroundColor,
+            onSecondary = customBackgroundColor,
+            onTertiary = customBackgroundColor,
+            onBackground = customTextColor,
+            onSurface = customTextColor,
+            surfaceVariant = customBackgroundColor,
+            onSurfaceVariant = customTextColor
+        )
+    }
+    
     MaterialTheme(
-        colorScheme = EInkColorScheme,
+        colorScheme = colorSchemeToUse,
         typography = Typography,
         content = content
     )

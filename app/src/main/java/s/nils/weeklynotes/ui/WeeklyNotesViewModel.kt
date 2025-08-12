@@ -12,6 +12,7 @@ import s.nils.weeklynotes.data.Note
 import s.nils.weeklynotes.data.NoteStatus
 import s.nils.weeklynotes.data.NotesStorage
 import s.nils.weeklynotes.data.Week
+import s.nils.weeklynotes.ui.theme.ColorScheme
 import java.io.File
 import android.net.Uri
 import android.content.Context
@@ -24,7 +25,10 @@ data class WeeklyNotesUiState(
     val isLoading: Boolean = false,
     val showImportWarning: Boolean = false,
     val pendingImportUri: Uri? = null,
-    val hideClosedNotes: Boolean = false
+    val hideClosedNotes: Boolean = false,
+    val colorScheme: ColorScheme = ColorScheme.LIGHT,
+    val customTextColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.Black,
+    val customBackgroundColor: androidx.compose.ui.graphics.Color = androidx.compose.ui.graphics.Color.White
 )
 
 class WeeklyNotesViewModel(application: Application) : AndroidViewModel(application) {
@@ -34,6 +38,8 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
 
     init {
         loadCurrentWeek()
+        loadColorScheme()
+        loadCustomColors()
     }
 
     private fun loadCurrentWeek() {
@@ -379,6 +385,42 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
             
             _uiState.update { it.copy(notes = reorderedNotes) }
             saveCurrentWeek()
+        }
+    }
+    
+    // Color scheme management
+    fun updateColorScheme(colorScheme: ColorScheme) {
+        _uiState.update { it.copy(colorScheme = colorScheme) }
+        viewModelScope.launch {
+            storage.saveColorScheme(colorScheme)
+        }
+    }
+    
+    private fun loadColorScheme() {
+        viewModelScope.launch {
+            val savedColorScheme = storage.loadColorScheme()
+            _uiState.update { it.copy(colorScheme = savedColorScheme) }
+        }
+    }
+    
+    private fun loadCustomColors() {
+        viewModelScope.launch {
+            val (textColor, backgroundColor) = storage.loadCustomColors()
+            _uiState.update { it.copy(customTextColor = textColor, customBackgroundColor = backgroundColor) }
+        }
+    }
+    
+    fun updateCustomTextColor(color: androidx.compose.ui.graphics.Color) {
+        _uiState.update { it.copy(customTextColor = color) }
+        viewModelScope.launch {
+            storage.saveCustomColors(uiState.value.customTextColor, uiState.value.customBackgroundColor)
+        }
+    }
+    
+    fun updateCustomBackgroundColor(color: androidx.compose.ui.graphics.Color) {
+        _uiState.update { it.copy(customBackgroundColor = color) }
+        viewModelScope.launch {
+            storage.saveCustomColors(uiState.value.customTextColor, uiState.value.customBackgroundColor)
         }
     }
 } 

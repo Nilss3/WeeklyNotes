@@ -10,6 +10,8 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import s.nils.weeklynotes.ui.WeeklyNotesScreen
@@ -49,7 +51,12 @@ class MainActivity : ComponentActivity() {
         viewModel = WeeklyNotesViewModel(application)
         
         setContent {
-            WeeklyNotesTheme {
+            val uiState by viewModel.uiState.collectAsState()
+            WeeklyNotesTheme(
+                colorScheme = uiState.colorScheme,
+                customTextColor = uiState.customTextColor,
+                customBackgroundColor = uiState.customBackgroundColor
+            ) {
                 WeeklyNotesScreen(
                     viewModel = viewModel,
                     onExportNotes = { launchExportFilePicker() },

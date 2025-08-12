@@ -10,6 +10,9 @@ import java.io.File
 import java.time.LocalDate
 import java.time.temporal.WeekFields
 import java.util.Locale
+import s.nils.weeklynotes.ui.theme.ColorScheme
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 
 data class WeekData(
     val year: Int,
@@ -23,6 +26,11 @@ data class NoteData(
     val status: String,
     val date: String,
     val order: Int
+)
+
+data class CustomColorsData(
+    val textColor: Int,
+    val backgroundColor: Int
 )
 
 class NotesStorage(private val context: Context) {
@@ -218,6 +226,50 @@ class NotesStorage(private val context: Context) {
                     )
                 }
             )
+        }
+    }
+    
+    suspend fun saveColorScheme(colorScheme: ColorScheme) = withContext(Dispatchers.IO) {
+        val file = File(storageDir, "color_scheme.json")
+        val json = gson.toJson(colorScheme.name)
+        file.writeText(json)
+    }
+    
+    suspend fun loadColorScheme(): ColorScheme = withContext(Dispatchers.IO) {
+        val file = File(storageDir, "color_scheme.json")
+        if (!file.exists()) return@withContext ColorScheme.LIGHT
+        
+        try {
+            val json = file.readText()
+            val colorSchemeName = gson.fromJson<String>(json, String::class.java)
+            ColorScheme.valueOf(colorSchemeName)
+        } catch (e: Exception) {
+            ColorScheme.LIGHT
+        }
+    }
+    
+    suspend fun saveCustomColors(textColor: Color, backgroundColor: Color) = withContext(Dispatchers.IO) {
+        val customColorsData = CustomColorsData(
+            textColor = textColor.toArgb(),
+            backgroundColor = backgroundColor.toArgb()
+        )
+        val json = gson.toJson(customColorsData)
+        val file = File(storageDir, "custom_colors.json")
+        file.writeText(json)
+    }
+    
+    suspend fun loadCustomColors(): Pair<Color, Color> = withContext(Dispatchers.IO) {
+        val file = File(storageDir, "custom_colors.json")
+        if (!file.exists()) return@withContext Pair(Color.Black, Color.White)
+        
+        try {
+            val json = file.readText()
+            val colorsData = gson.fromJson(json, CustomColorsData::class.java)
+            val textColor = Color(colorsData.textColor)
+            val backgroundColor = Color(colorsData.backgroundColor)
+            Pair(textColor, backgroundColor)
+        } catch (e: Exception) {
+            Pair(Color.Black, Color.White)
         }
     }
     
