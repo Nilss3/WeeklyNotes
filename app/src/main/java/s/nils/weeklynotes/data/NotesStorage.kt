@@ -273,6 +273,24 @@ class NotesStorage(private val context: Context) {
         }
     }
     
+    suspend fun saveHideClosedNotes(hideClosedNotes: Boolean) = withContext(Dispatchers.IO) {
+        val file = File(storageDir, "hide_closed_notes.json")
+        val json = gson.toJson(hideClosedNotes)
+        file.writeText(json)
+    }
+    
+    suspend fun loadHideClosedNotes(): Boolean = withContext(Dispatchers.IO) {
+        val file = File(storageDir, "hide_closed_notes.json")
+        if (!file.exists()) return@withContext false
+        
+        try {
+            val json = file.readText()
+            gson.fromJson(json, Boolean::class.java)
+        } catch (e: Exception) {
+            false
+        }
+    }
+    
     companion object {
         fun getCurrentWeek(): Week {
             val now = LocalDate.now()

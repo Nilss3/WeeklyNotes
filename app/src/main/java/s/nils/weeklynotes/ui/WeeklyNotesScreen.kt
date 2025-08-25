@@ -523,6 +523,10 @@ fun WeeklyNotesScreen(
     val uiState by viewModel.uiState.collectAsState()
     val listState = rememberLazyListState()
     
+    // Get current date and check if we're viewing the current week
+    val currentDate = LocalDate.now()
+    val isCurrentWeek = uiState.currentWeek.startDate <= currentDate && currentDate <= uiState.currentWeek.endDate
+    
     fun openCalendarApp(date: LocalDate) {
         try {
             // Convert date to milliseconds for calendar intent
@@ -613,11 +617,20 @@ fun WeeklyNotesScreen(
                     onColorSchemeClick = { showColorSchemeScreen = true }
                 )
             
+            // Line above date row
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(2.dp)
+                    .background(MaterialTheme.colorScheme.onSurface)
+            )
+            
             // Date range
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                    .padding(horizontal = 16.dp, vertical = 2.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 // Monday
@@ -632,7 +645,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -640,7 +653,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -648,7 +661,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                 }
@@ -665,7 +678,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(1)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -673,7 +686,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(1)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -681,7 +694,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(1)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                 }
@@ -698,7 +711,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(2)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -706,7 +719,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(2)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -714,7 +727,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(2)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                 }
@@ -731,7 +744,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(3)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -739,7 +752,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(3)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -747,7 +760,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(3)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                 }
@@ -764,7 +777,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(4)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -772,7 +785,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(4)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -780,7 +793,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(4)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                 }
@@ -797,7 +810,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(5)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -805,7 +818,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(5)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -813,7 +826,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.startDate.plusDays(5)) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                 }
@@ -830,7 +843,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.endDate) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -838,7 +851,7 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 14.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.endDate) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                     Text(
@@ -846,11 +859,20 @@ fun WeeklyNotesScreen(
                         style = TextStyle(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontSize = 12.sp,
-                            fontWeight = FontWeight.Normal
+                            fontWeight = if (isCurrentWeek && currentDate == uiState.currentWeek.endDate) FontWeight.Bold else FontWeight.Normal
                         )
                     )
                 }
             }
+            
+            // Line below date row
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .height(2.dp)
+                    .background(MaterialTheme.colorScheme.onSurface)
+            )
             
             // Notes area - now takes remaining space and scrolls properly
             LazyColumn(
@@ -859,7 +881,7 @@ fun WeeklyNotesScreen(
                     .weight(1f) // Take remaining space
                     .padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
-                contentPadding = PaddingValues(top = 4.dp, bottom = 40.dp)
+                contentPadding = PaddingValues(top = 12.dp, bottom = 40.dp)
             ) {
                 val filteredNotes = if (uiState.hideClosedNotes) {
                     uiState.notes.filter { note ->

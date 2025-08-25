@@ -40,6 +40,7 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
         loadCurrentWeek()
         loadColorScheme()
         loadCustomColors()
+        loadHideClosedNotes()
     }
 
     private fun loadCurrentWeek() {
@@ -257,6 +258,9 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
                 hideClosedNotes = !it.hideClosedNotes
             )
         }
+        viewModelScope.launch {
+            storage.saveHideClosedNotes(_uiState.value.hideClosedNotes)
+        }
     }
     
     fun changeNoteStatus(noteId: String, newStatus: NoteStatus) {
@@ -407,6 +411,13 @@ class WeeklyNotesViewModel(application: Application) : AndroidViewModel(applicat
         viewModelScope.launch {
             val (textColor, backgroundColor) = storage.loadCustomColors()
             _uiState.update { it.copy(customTextColor = textColor, customBackgroundColor = backgroundColor) }
+        }
+    }
+    
+    private fun loadHideClosedNotes() {
+        viewModelScope.launch {
+            val hideClosedNotes = storage.loadHideClosedNotes()
+            _uiState.update { it.copy(hideClosedNotes = hideClosedNotes) }
         }
     }
     
