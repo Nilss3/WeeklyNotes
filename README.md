@@ -3,6 +3,7 @@
 A simple Android application for managing weekly notes and tasks, optimized for e-ink displays like the one on the Mudita Kompakt. 
 
 Explanatory screenshot:
+
 <img src="images/screenshot.png" width="300">
 
 This app was made for two reasons
