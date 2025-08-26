@@ -3,7 +3,7 @@
 A simple Android application for managing weekly notes and tasks, optimized for e-ink displays like the one on the Mudita Kompakt. 
 
 Explanatory screenshot:
-<img src="images/screenshot.png" width="200">
+<img src="images/screenshot.png" width="300">
 
 This app was made for two reasons
 - **Complete lack of weekly notes/planner apps**: I'll dive into this below.
