@@ -2,6 +2,9 @@
 
 A simple Android application for managing weekly notes and tasks, optimized for e-ink displays like the one on the Mudita Kompakt. 
 
+Explanatory screenshot:
+[](images/screenshot.png)
+
 This app was made for two reasons
 - **Complete lack of weekly notes/planner apps**: I'll dive into this below.
 - **To try 'vibe-coding'**: The app is built entirely by a toaster according to my functional requirements and then endless debugging
